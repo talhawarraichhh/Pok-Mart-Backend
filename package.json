@@ -1,0 +1,27 @@
+{
+  "name": "pok-mart",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node index.js",
+    "build": "echo 'No build step needed yet'",
+    "prisma": "prisma"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/talhawarraichhh/Pok-Mart.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/talhawarraichhh/Pok-Mart/issues"
+  },
+  "homepage": "https://github.com/talhawarraichhh/Pok-Mart#readme",
+  "description": "",
+  "dependencies": {
+    "@prisma/client": "^6.6.0",
+    "prisma": "^6.6.0"
+  }
+}

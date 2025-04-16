@@ -1,0 +1,220 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------
+// 1) USER, ADMIN, CLIENT, SELLER, CUSTOMER
+// ----------------------------------------
+
+model User {
+  id        Int     @id @default(autoincrement())
+  userID    Int?    // might not be needed if 'id' is used as PK
+  password  String
+  username  String
+  email     String
+
+  // The diagram shows subtyping to Client, Admin
+  client Client?
+  admin  Admin?
+}
+
+// An Admin is a specialized User (1:1).
+model Admin {
+  id      Int  @id @default(autoincrement())
+  userId  Int  @unique
+  user    User @relation(fields: [userId], references: [id])
+}
+
+// A Client is also a specialized User (1:1).
+model Client {
+  id      Int  @id @default(autoincrement())
+  userId  Int  @unique
+  user    User @relation(fields: [userId], references: [id])
+
+  // The ERD shows Client is further specialized into Seller and Customer
+  seller   Seller?
+  customer Customer?
+}
+
+// A Seller is a specialized Client. The diagram shows a "Rating" attribute.
+model Seller {
+  id       Int     @id @default(autoincrement())
+  clientId Int     @unique
+  rating   Int?
+
+  client   Client  @relation(fields: [clientId], references: [id])
+
+  // The ERD has "Fulfills" relationship to Orders (1→N).
+  orders   Order[]
+}
+
+// A Customer is a specialized Client. They can "Place" orders, "Have" a cart, "List" products, etc.
+model Customer {
+  id         Int       @id @default(autoincrement())
+  clientId   Int       @unique
+
+  client     Client    @relation(fields: [clientId], references: [id])
+
+  // "Places" relationship → A customer can place many Orders
+  orders     Order[]
+
+  // "Has" relationship → A customer has exactly 1 Cart (the diagram suggests 1:1)
+  cart       Cart?
+
+  // "Lists" relationship → A customer can create many Listings
+  listings   Listing[]
+}
+
+// ---------------------
+// 2) CART and CART_ITEM
+// ---------------------
+
+model Cart {
+  id             Int         @id @default(autoincrement())
+  cart_ID        Int?        // If you want a separate "Cart_ID" distinct from 'id'
+  numberOfItems  Int?
+
+  // 1:1 with Customer
+  customerId     Int?        @unique
+  customer       Customer?   @relation(fields: [customerId], references: [id])
+
+  // 1→N "Has" relationship to CartItem
+  items          CartItem[]
+}
+
+model CartItem {
+  id          Int    @id @default(autoincrement())
+  item_Number String?
+  quantity    Int
+
+  // Many CartItems belong to one Cart
+  cartId   Int
+  cart     Cart  @relation(fields: [cartId], references: [id])
+
+  // Each CartItem "Contains" 1 Product
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+// ------------------------
+// 3) ORDER and ORDER_ITEM
+// ------------------------
+
+model Order {
+  id            Int       @id @default(autoincrement())
+  order_Number  String?
+  cost          Decimal?
+
+  // "Places": Customer → Order
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  // "Fulfills": Seller → Order
+  sellerId   Int
+  seller     Seller   @relation(fields: [sellerId], references: [id])
+
+  // "Has" relationship to OrderItem (1→N)
+  items      OrderItem[]
+}
+
+model OrderItem {
+  id            Int     @id @default(autoincrement())
+  item_Number   String?
+  quantity      Int
+  purchase_Price Decimal?
+
+  // part of an Order
+  orderId Int
+  order   Order @relation(fields: [orderId], references: [id])
+
+  // "Contains" a Product 
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+// -------------------------------------------------------------------
+// 4) PRODUCT, LISTING, SET, and subtypes SINGLE_CARD / SEALED_PRODUCT
+// -------------------------------------------------------------------
+
+model Product {
+  id           Int       @id @default(autoincrement())
+  product_ID   String?
+  name         String
+  description  String?
+  productType  String?
+
+  // A Product "Belongs_To" exactly one Set (N:1)
+  setId    Int?
+  set      Set?     @relation(fields: [setId], references: [id])
+
+  // A Product can appear in many listings
+  listings Listing[]
+
+  // A Product can appear in many OrderItems
+  OrderItem OrderItem[]
+
+  // A Product can appear in many CartItems
+  CartItem  CartItem[]
+
+  // Subtyping: SingleCard or SealedProduct (optional, if you want separate tables)
+  singleCard    SingleCard?
+  sealedProduct SealedProduct?
+}
+
+model Set {
+  id           Int       @id @default(autoincrement())
+  name         String
+  release_Date DateTime?
+
+  // 1→N: a set can have many products
+  products     Product[]
+}
+
+model Listing {
+  id         Int     @id @default(autoincrement())
+  stock      Int
+  price      Decimal
+
+  // "Lists" relationship: 1 Customer → N Listings 
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  // "Has" relationship: 1 Product → N Listings
+  productId Int
+  product   Product   @relation(fields: [productId], references: [id])
+}
+
+// Subtypes of Product. Typically you store attributes unique to SingleCard or SealedProduct here
+model SingleCard {
+  id         Int    @id @default(autoincrement())
+  productId  Int    @unique
+  condition  String
+  rarity     String
+  type       String
+  category   String
+
+  product    Product @relation(fields: [productId], references: [id])
+}
+
+model SealedProduct {
+  id         Int    @id @default(autoincrement())
+  productId  Int    @unique
+  // Add additional sealed-product fields here
+  condition  String?
+  category   String?
+  // etc.
+
+  product    Product @relation(fields: [productId], references: [id])
+}
