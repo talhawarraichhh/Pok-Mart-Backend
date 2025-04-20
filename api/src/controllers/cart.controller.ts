@@ -24,7 +24,7 @@ export const getCartById: RequestHandler = async (req, res) => {
 
 export const getCartByCustomerId: RequestHandler = async (req, res) => {
     try {
-      const userId = Number(req.params.userId);
+      const userId = Number(req.params.customerId);
   
       const customer = await prisma.customer.findUnique({ where: { userId } });
       if (!customer) {
