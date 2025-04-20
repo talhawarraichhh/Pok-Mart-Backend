@@ -4,6 +4,7 @@ import {
   getAllProducts,
   getActiveListingsByUserId,
   editListing,
+  deleteListing,
 } from "../controllers/products.controller";
 
 const router = Router();
@@ -11,5 +12,6 @@ const router = Router();
 router.get("/products", getAllProducts);
 router.get("/products/user/:userId/listings", getActiveListingsByUserId);
 router.put("/products/user/:userId/listings/:listingId", editListing);
+router.delete("/products/user/:userId/listings/:listingId", deleteListing);
 
 export default router;

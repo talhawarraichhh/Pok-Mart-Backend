@@ -74,3 +74,29 @@ export async function editListing(req: Request, res: Response) {
     res.status(500).json({ error: "Internal server error" });
   }
 }
+
+export async function deleteListing(req: Request, res: Response) {
+  try {
+    const userId = Number(req.params.userId);
+    const listingId = Number(req.params.listingId);
+
+    const seller = await prisma.seller.findUnique({ where: { userId } });
+    if (!seller) {
+      res.status(404).json({ error: "Seller not found" });
+      return;
+    }
+
+    const listing = await prisma.listing.findFirst({
+      where: { id: listingId, sellerId: seller.id },
+    });
+    if (!listing) {
+      res.status(404).json({ error: "Listing not found for this seller" });
+      return;
+    }
+
+    await prisma.listing.delete({ where: { id: listing.id } });
+    res.status(204).end();
+  } catch {
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
