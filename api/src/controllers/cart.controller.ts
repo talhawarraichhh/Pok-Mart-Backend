@@ -23,33 +23,39 @@ export const getCartById: RequestHandler = async (req, res) => {
 };
 
 export const getCartByCustomerId: RequestHandler = async (req, res) => {
-  try {
-    const customerId = Number(req.params.customerId);
-
-    let cart = await prisma.cart.findUnique({
-      where: { customerId },
-      include: cartIncludes,
-    });
-
-    if (!cart) {
-      await prisma.cart.create({
-        data: { customerId, numberOfItems: 0 },
-      });
-      cart = await prisma.cart.findUnique({
+    try {
+      const userId = Number(req.params.userId);
+  
+      const customer = await prisma.customer.findUnique({ where: { userId } });
+      if (!customer) {
+        res.status(404).json({ error: 'Customer not found' });
+        return;
+      }
+  
+      const customerId = customer.id;
+  
+      let cart = await prisma.cart.findUnique({
         where: { customerId },
         include: cartIncludes,
       });
+  
       if (!cart) {
-        res.status(500).json({ error: "Could not create cart" });
-        return;
+        await prisma.cart.create({ data: { customerId, numberOfItems: 0 } });
+        cart = await prisma.cart.findUnique({
+          where: { customerId },
+          include: cartIncludes,
+        });
+        if (!cart) {
+          res.status(500).json({ error: 'Could not create cart' });
+          return;
+        }
       }
+  
+      res.json(cart);
+    } catch {
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    res.json(cart);
-  } catch {
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
+  };  
 
 export const addItemToCart: RequestHandler = async (req, res) => {
   try {
