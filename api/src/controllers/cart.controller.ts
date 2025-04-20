@@ -59,7 +59,15 @@ export const getCartByCustomerId: RequestHandler = async (req, res) => {
 
 export const addItemToCart: RequestHandler = async (req, res) => {
   try {
-    const customerId = Number(req.params.customerId);
+    const userId = Number(req.params.customerId);
+  
+    const customer = await prisma.customer.findUnique({ where: { userId } });
+    if (!customer) {
+      res.status(404).json({ error: 'Customer not found' });
+      return;
+    }
+
+    const customerId = customer.id;
     const { productId, quantity } = req.body as {
       productId: number;
       quantity: number;
