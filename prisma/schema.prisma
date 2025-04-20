@@ -4,7 +4,7 @@
 // ———————————————————————————————————————————————————————————————————
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  output   = "./node_modules/@prisma/client"
 }
 
 datasource db {
@@ -17,7 +17,6 @@ datasource db {
 // ———————————————————————————————————————————————————————————————————
 model User {
   id        Int     @id @default(autoincrement())
-  // userID   Int?    // –– REMOVED (duplicate of primary key)
   password  String
   username  String
   email     String

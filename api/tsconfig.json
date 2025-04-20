@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    /* ---------- Node + ES‑Modules ---------- */
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2022",
+
+    /* ---------- Paths ---------- */
+    "rootDir": "./src",     // <‑‑ api/src
+    "outDir":  "./dist",    // <‑‑ api/dist (emitted JS)
+
+    /* ---------- Quality‑of‑life ---------- */
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+
+  /* Compile every *.ts inside api/src */
+  "include": ["src/**/*.ts"]
+}
