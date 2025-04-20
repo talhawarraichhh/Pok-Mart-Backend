@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -59,14 +59,49 @@ export const createUser: RequestHandler = async (req, res) => {
 export const updateUser: RequestHandler = async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const { username, email, password } = req.body;
+    const { username, email, password, role } = req.body as {
+      username?: string;
+      email?: string;
+      password?: string;
+      role?: "seller" | "customer" | "admin" | null;
+    };
+
+    const data: Prisma.UserUpdateInput = {};
+    if (username !== undefined) data.username = username;
+    if (email !== undefined) data.email = email;
+    if (password !== undefined) data.password = password;
+
+    if (role !== undefined) {
+      data.seller =
+        role === "seller"
+          ? { upsert: { create: {}, update: {} } }
+          : { delete: true };
+      data.customer =
+        role === "customer"
+          ? { upsert: { create: {}, update: {} } }
+          : { delete: true };
+      data.admin =
+        role === "admin"
+          ? { upsert: { create: {}, update: {} } }
+          : { delete: true };
+    }
+
     const user = await prisma.user.update({
       where: { id },
-      data: { username, email, password },
+      data,
+      include: { seller: true, customer: true, admin: true },
     });
+
     res.json(user);
-  } catch {
-    res.status(404).json({ error: "User not found" });
+  } catch (err) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2025"
+    ) {
+      res.status(404).json({ error: "User not found" });
+    } else {
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
 };
 
