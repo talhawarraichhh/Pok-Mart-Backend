@@ -1,6 +1,7 @@
 // routes/order.routes.ts
 import { Router } from 'express';
 import {
+  getAllOrders,
   getOrdersByCustomerUserId,
   getOrdersBySellerUserId,
   getOrderById,
@@ -9,6 +10,7 @@ import {
 
 const router = Router();
 
+router.get('/orders', getAllOrders);
 router.get('/orders/user/:userId', getOrdersByCustomerUserId);
 router.get('/orders/seller/:userId', getOrdersBySellerUserId);
 router.get('/orders/:id', getOrderById);

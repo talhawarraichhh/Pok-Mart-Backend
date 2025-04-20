@@ -12,6 +12,15 @@ const orderIncludes = {
   },
 } as const;
 
+export const getAllOrders: RequestHandler = async (_req, res) => {
+  try {
+    const orders = await prisma.order.findMany({ include: orderIncludes });
+    res.json(orders);
+  } catch {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 export const getOrdersByCustomerUserId: RequestHandler = async (req, res) => {
   try {
     const userId = Number(req.params.userId);
@@ -74,7 +83,7 @@ export const createOrder: RequestHandler = async (req, res) => {
 
     const customer = await prisma.customer.findUnique({ where: { userId } });
     if (!customer) {
-      res.status(404).json({ error: 'Customer not found' });
+      res.status(404).json({ error: "Customer not found" });
       return;
     }
 
@@ -83,23 +92,28 @@ export const createOrder: RequestHandler = async (req, res) => {
       select: { sellerId: true },
     });
     if (!firstListing) {
-      res.status(404).json({ error: 'Listing not found for first product' });
+      res.status(404).json({ error: "Listing not found for first product" });
       return;
     }
     const sellerId = firstListing.sellerId;
 
     const inconsistent = await prisma.listing.findFirst({
       where: {
-        productId: { in: items.map(i => i.productId) },
+        productId: { in: items.map((i) => i.productId) },
         NOT: { sellerId },
       },
     });
     if (inconsistent) {
-      res.status(400).json({ error: 'All products must belong to the same seller' });
+      res
+        .status(400)
+        .json({ error: "All products must belong to the same seller" });
       return;
     }
 
-    const cost = items.reduce((sum, i) => sum + i.quantity * i.purchase_Price, 0);
+    const cost = items.reduce(
+      (sum, i) => sum + i.quantity * i.purchase_Price,
+      0
+    );
 
     const order = await prisma.order.create({
       data: {
@@ -113,6 +127,6 @@ export const createOrder: RequestHandler = async (req, res) => {
 
     res.status(201).json(order);
   } catch {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
 };
