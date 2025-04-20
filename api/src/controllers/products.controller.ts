@@ -18,3 +18,21 @@ export async function getAllProducts(req: Request, res: Response) {
     res.status(500).json({ error: "Internal server error" });
   }
 }
+
+export async function getActiveListingsByUserId(req: Request, res: Response) {
+  try {
+    const userId = Number(req.params.userId);
+    const seller = await prisma.seller.findUnique({ where: { userId } });
+    if (!seller) {
+      res.status(404).json({ error: "Seller not found" });
+      return;
+    }
+    const listings = await prisma.listing.findMany({
+      where: { sellerId: seller.id, stock: { gt: 0 } },
+      include: { product: true },
+    });
+    res.json(listings);
+  } catch {
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
