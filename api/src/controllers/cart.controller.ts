@@ -3,7 +3,13 @@ import { RequestHandler } from "express";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-const cartIncludes = { items: { include: { product: true } } } as const;
+const cartIncludes = {
+    items: {
+      include: {
+        product: { include: { listings: true } },
+      },
+    },
+  } as const;
 
 export const getCartById: RequestHandler = async (req, res) => {
   try {
@@ -96,10 +102,18 @@ export const addItemToCart: RequestHandler = async (req, res) => {
 
     // update cart and return full object with items + product details
     const fullCart = await prisma.cart.update({
-      where: { id: baseCart.id },
-      data: { numberOfItems: totalQty },
-      include: { items: { include: { product: true } } },
-    });
+        where: { id: baseCart.id },
+        data: { numberOfItems: totalQty },
+        include: {
+          items: {
+            include: {
+              product: {
+                include: { listings: true }
+              }
+            }
+          }
+        },
+      });      
 
     res.status(201).json(fullCart);
   } catch {
