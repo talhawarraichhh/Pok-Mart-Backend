@@ -16,13 +16,14 @@ datasource db {
 // 1) USER, ADMIN, CLIENT, SELLER, CUSTOMER
 // ———————————————————————————————————————————————————————————————————
 model User {
-  id        Int     @id @default(autoincrement())
-  password  String
-  username  String
-  email     String
+  id       Int      @id @default(autoincrement())
+  password String
+  username String
+  email    String
 
-  client Client?
-  admin  Admin?
+  seller   Seller?
+  customer Customer?
+  admin    Admin?
 }
 
 model Admin {
@@ -31,29 +32,18 @@ model Admin {
   user   User @relation(fields: [userId], references: [id])
 }
 
-model Client {
-  id     Int  @id @default(autoincrement())
-  userId Int  @unique
-  user   User @relation(fields: [userId], references: [id])
-
-  seller   Seller?
-  customer Customer?
-}
-
 model Seller {
   id       Int   @id @default(autoincrement())
-  clientId Int   @unique
+  userId   Int   @unique
   rating   Int?
-
-  client Client  @relation(fields: [clientId], references: [id])
-  orders Order[]
+  user     User  @relation(fields: [userId], references: [id])
+  orders   Order[]
 }
 
 model Customer {
   id       Int      @id @default(autoincrement())
-  clientId Int      @unique
-  client   Client   @relation(fields: [clientId], references: [id])
-
+  userId   Int      @unique
+  user     User     @relation(fields: [userId], references: [id])
   orders   Order[]
   cart     Cart?
   listings Listing[]

@@ -8,7 +8,7 @@
     "build": "npm run prisma:generate && tsc -p api",
     "start": "prisma generate --schema=prisma/schema.prisma && node api/dist/server.js",
     "db:push": "prisma db push",
-    "seed": "node prisma/seed.js",
+    "seed": "ts-node prisma/seed.ts",
     "reset": "prisma migrate reset --skip-seed && npm run seed",
     "postinstall": "prisma generate --schema=prisma/schema.prisma"
   },

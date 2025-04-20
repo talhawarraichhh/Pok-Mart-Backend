@@ -6,12 +6,7 @@ const prisma = new PrismaClient();
 export const getAllUsers: RequestHandler = async (_req, res) => {
   try {
     const users = await prisma.user.findMany({
-      include: {
-        client: {
-          include: { seller: true, customer: true },
-        },
-        admin: true,
-      },
+      include: { seller: true, customer: true, admin: true },
     });
     res.json(users);
   } catch {
@@ -24,12 +19,7 @@ export const getUserById: RequestHandler = async (req, res) => {
     const id = Number(req.params.id);
     const user = await prisma.user.findUnique({
       where: { id },
-      include: {
-        client: {
-          include: { seller: true, customer: true },
-        },
-        admin: true,
-      },
+      include: { seller: true, customer: true, admin: true },
     });
     if (!user) {
       res.status(404).json({ error: "User not found" });
@@ -43,16 +33,22 @@ export const getUserById: RequestHandler = async (req, res) => {
 
 export const createUser: RequestHandler = async (req, res) => {
   try {
-    const { username, email, password, role } = req.body;
+    const { username, email, password, role } = req.body as {
+      username: string;
+      email: string;
+      password: string;
+      role?: "seller" | "customer" | "admin";
+    };
     const user = await prisma.user.create({
       data: {
         username,
         email,
         password,
-        client: role === "client" ? { create: {} } : undefined,
+        seller: role === "seller" ? { create: {} } : undefined,
+        customer: role === "customer" ? { create: {} } : undefined,
         admin: role === "admin" ? { create: {} } : undefined,
       },
-      include: { client: true, admin: true },
+      include: { seller: true, customer: true, admin: true },
     });
     res.status(201).json(user);
   } catch {
