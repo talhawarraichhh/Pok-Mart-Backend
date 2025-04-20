@@ -2,33 +2,21 @@
   "name": "pok-mart",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
-
   "scripts": {
-    "dev":   "ts-node-dev --respawn --transpile-only --project api/tsconfig.json api/src/server.ts",
-
-    "prisma:generate": "prisma generate",
-
+    "dev": "ts-node-dev --respawn --transpile-only --project api/tsconfig.json api/src/server.ts",
+    "prisma:generate": "prisma generate --schema=prisma/schema.prisma",
     "build": "npm run prisma:generate && tsc -p api",
-
-    "start": "prisma generate && node api/dist/server.js",
-
+    "start": "prisma generate --schema=prisma/schema.prisma && node api/dist/server.js",
     "db:push": "prisma db push",
-    "seed":     "node prisma/seed.js",
-    "reset":    "prisma migrate reset --skip-seed && npm run seed",
-
-    "postinstall": "prisma generate"
+    "seed": "node prisma/seed.js",
+    "reset": "prisma migrate reset --skip-seed && npm run seed",
+    "postinstall": "prisma generate --schema=prisma/schema.prisma"
   },
-
   "repository": {
     "type": "git",
     "url": "https://github.com/talhawarraichhh/Pok-Mart.git"
   },
-
-  "keywords": [],
-  "author": "",
   "license": "ISC",
-
   "dependencies": {
     "@prisma/client": "^6.6.0",
     "bcryptjs": "^3.0.2",
@@ -36,7 +24,6 @@
     "express": "^5.1.0",
     "prisma": "^6.6.0"
   },
-
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
