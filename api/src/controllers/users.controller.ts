@@ -57,47 +57,57 @@ export const createUser: RequestHandler = async (req, res) => {
 };
 
 export const updateUser: RequestHandler = async (req, res) => {
+  const id = Number(req.params.id);
+  const { username, email, password, role } = req.body as {
+    username?: string;
+    email?: string;
+    password?: string;
+    role?: "seller" | "customer" | "admin" | null;
+  };
+
   try {
-    const id = Number(req.params.id);
-    const { username, email, password, role } = req.body as {
-      username?: string;
-      email?: string;
-      password?: string;
-      role?: "seller" | "customer" | "admin" | null;
-    };
+    await prisma.$transaction(async (tx) => {
+      const userData: Prisma.UserUpdateInput = {};
+      if (username !== undefined) userData.username = username;
+      if (email !== undefined) userData.email = email;
+      if (password !== undefined) userData.password = password;
+      await tx.user.update({ where: { id }, data: userData });
 
-    const data: Prisma.UserUpdateInput = {};
-    if (username !== undefined) data.username = username;
-    if (email !== undefined) data.email = email;
-    if (password !== undefined) data.password = password;
+      if (role !== undefined) {
+        await Promise.all([
+          tx.seller.deleteMany({ where: { userId: id } }),
+          tx.customer.deleteMany({ where: { userId: id } }),
+          tx.admin.deleteMany({ where: { userId: id } }),
+        ]);
 
-    if (role !== undefined) {
-      data.seller =
-        role === "seller"
-          ? { upsert: { create: {}, update: {} } }
-          : { delete: true };
-      data.customer =
-        role === "customer"
-          ? { upsert: { create: {}, update: {} } }
-          : { delete: true };
-      data.admin =
-        role === "admin"
-          ? { upsert: { create: {}, update: {} } }
-          : { delete: true };
-    }
-
-    const user = await prisma.user.update({
-      where: { id },
-      data,
-      include: { seller: true, customer: true, admin: true },
+        if (role === "seller")
+          await tx.seller.upsert({
+            where: { userId: id },
+            update: {},
+            create: { userId: id },
+          });
+        if (role === "customer")
+          await tx.customer.upsert({
+            where: { userId: id },
+            update: {},
+            create: { userId: id },
+          });
+        if (role === "admin")
+          await tx.admin.upsert({
+            where: { userId: id },
+            update: {},
+            create: { userId: id },
+          });
+      }
     });
 
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: { seller: true, customer: true, admin: true },
+    });
     res.json(user);
   } catch (err) {
-    if (
-      err instanceof Prisma.PrismaClientKnownRequestError &&
-      err.code === "P2025"
-    ) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2025") {
       res.status(404).json({ error: "User not found" });
     } else {
       res.status(500).json({ error: "Internal server error" });
