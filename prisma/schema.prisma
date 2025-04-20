@@ -29,22 +29,22 @@ model User {
 model Admin {
   id     Int  @id @default(autoincrement())
   userId Int  @unique
-  user   User @relation(fields: [userId], references: [id])
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)   
 }
 
 model Seller {
   id       Int   @id @default(autoincrement())
   userId   Int   @unique
   rating   Int?
-  user     User  @relation(fields: [userId], references: [id])
+  user     User  @relation(fields: [userId], references: [id], onDelete: Cascade)   
   orders   Order[]
-  listings Listing[] 
+  listings Listing[]
 }
 
 model Customer {
   id       Int      @id @default(autoincrement())
   userId   Int      @unique
-  user     User     @relation(fields: [userId], references: [id])
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade) 
   orders   Order[]
   cart     Cart?
 }
@@ -82,14 +82,11 @@ model Order {
   id           Int      @id @default(autoincrement())
   order_Number String?
   cost         Decimal?
-
-  customerId Int
-  customer   Customer @relation(fields: [customerId], references: [id])
-
-  sellerId Int
-  seller   Seller   @relation(fields: [sellerId], references: [id])
-
-  items OrderItem[]
+  customerId   Int
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade) // ← add
+  sellerId     Int
+  seller       Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)   // ← add
+  items        OrderItem[]
 }
 
 model OrderItem {
@@ -97,12 +94,10 @@ model OrderItem {
   item_Number    String?
   quantity       Int
   purchase_Price Decimal?
-
-  orderId Int
-  order   Order @relation(fields: [orderId], references: [id])
-
-  productId Int
-  product   Product @relation(fields: [productId], references: [id])
+  orderId        Int
+  order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)   // ← add
+  productId      Int
+  product        Product @relation(fields: [productId], references: [id])
 }
 
 // ———————————————————————————————————————————————————————————————————
@@ -138,12 +133,10 @@ model Listing {
   id        Int     @id @default(autoincrement())
   stock     Int
   price     Decimal
-
-  sellerId   Int
-  seller     Seller   @relation(fields: [sellerId], references: [id])
-
+  sellerId  Int
+  seller    Seller  @relation(fields: [sellerId], references: [id], onDelete: Cascade) 
   productId Int
-  product   Product   @relation(fields: [productId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
 }
 
 model SingleCard {

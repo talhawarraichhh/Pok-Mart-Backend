@@ -110,8 +110,12 @@ export const deleteUser: RequestHandler = async (req, res) => {
     const id = Number(req.params.id);
     await prisma.user.delete({ where: { id } });
     res.status(204).end();
-  } catch {
-    res.status(404).json({ error: "User not found" });
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2025") {
+      res.status(404).json({ error: "User not found" });
+    } else {
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
 };
 
