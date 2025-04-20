@@ -68,34 +68,43 @@ export const getOrderById: RequestHandler = async (req, res) => {
 export const createOrder: RequestHandler = async (req, res) => {
   try {
     const userId = Number(req.params.userId);
-    const { sellerUserId, items } = req.body as {
-      sellerUserId: number;
+    const { items } = req.body as {
       items: { productId: number; quantity: number; purchase_Price: number }[];
     };
 
     const customer = await prisma.customer.findUnique({ where: { userId } });
     if (!customer) {
-      res.status(404).json({ error: "Customer not found" });
+      res.status(404).json({ error: 'Customer not found' });
       return;
     }
 
-    const seller = await prisma.seller.findUnique({
-      where: { userId: sellerUserId },
+    const firstListing = await prisma.listing.findFirst({
+      where: { productId: items[0].productId },
+      select: { sellerId: true },
     });
-    if (!seller) {
-      res.status(404).json({ error: "Seller not found" });
+    if (!firstListing) {
+      res.status(404).json({ error: 'Listing not found for first product' });
+      return;
+    }
+    const sellerId = firstListing.sellerId;
+
+    const inconsistent = await prisma.listing.findFirst({
+      where: {
+        productId: { in: items.map(i => i.productId) },
+        NOT: { sellerId },
+      },
+    });
+    if (inconsistent) {
+      res.status(400).json({ error: 'All products must belong to the same seller' });
       return;
     }
 
-    const cost = items.reduce(
-      (sum, i) => sum + i.quantity * i.purchase_Price,
-      0
-    );
+    const cost = items.reduce((sum, i) => sum + i.quantity * i.purchase_Price, 0);
 
     const order = await prisma.order.create({
       data: {
         customerId: customer.id,
-        sellerId: seller.id,
+        sellerId,
         cost,
         items: { create: items },
       },
@@ -104,6 +113,6 @@ export const createOrder: RequestHandler = async (req, res) => {
 
     res.status(201).json(order);
   } catch {
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: 'Internal server error' });
   }
 };

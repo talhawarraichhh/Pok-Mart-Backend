@@ -38,6 +38,7 @@ model Seller {
   rating   Int?
   user     User  @relation(fields: [userId], references: [id])
   orders   Order[]
+  listings Listing[] 
 }
 
 model Customer {
@@ -46,7 +47,6 @@ model Customer {
   user     User     @relation(fields: [userId], references: [id])
   orders   Order[]
   cart     Cart?
-  listings Listing[]
 }
 
 // ———————————————————————————————————————————————————————————————————
@@ -139,8 +139,8 @@ model Listing {
   stock     Int
   price     Decimal
 
-  customerId Int
-  customer   Customer @relation(fields: [customerId], references: [id])
+  sellerId   Int
+  seller     Seller   @relation(fields: [sellerId], references: [id])
 
   productId Int
   product   Product   @relation(fields: [productId], references: [id])
