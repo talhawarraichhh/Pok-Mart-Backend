@@ -97,19 +97,6 @@ export const createOrder: RequestHandler = async (req, res) => {
     }
     const sellerId = firstListing.sellerId;
 
-    const inconsistent = await prisma.listing.findFirst({
-      where: {
-        productId: { in: items.map((i) => i.productId) },
-        NOT: { sellerId },
-      },
-    });
-    if (inconsistent) {
-      res
-        .status(400)
-        .json({ error: "All products must belong to the same seller" });
-      return;
-    }
-
     const cost = items.reduce(
       (sum, i) => sum + i.quantity * i.purchase_Price,
       0
