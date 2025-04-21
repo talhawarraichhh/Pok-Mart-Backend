@@ -100,3 +100,40 @@ export async function deleteListing(req: Request, res: Response) {
     res.status(500).json({ error: "Internal server error" });
   }
 }
+
+export async function createListing(req: Request, res: Response) {
+  try {
+    const userId = Number(req.params.userId);
+    const { productId, price, stock } = req.body as {
+      productId: number;
+      price: number;
+      stock: number;
+    };
+
+    const seller = await prisma.seller.findUnique({ where: { userId } });
+    if (!seller) {
+      res.status(404).json({ error: "Seller not found" });
+      return;
+    }
+
+    const product = await prisma.product.findUnique({ where: { id: productId } });
+    if (!product) {
+      res.status(404).json({ error: "Product not found" });
+      return;
+    }
+
+    const listing = await prisma.listing.create({
+      data: {
+        sellerId: seller.id,
+        productId,
+        price,
+        stock,
+      },
+      include: { product: true },
+    });
+
+    res.status(201).json(listing);
+  } catch {
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
