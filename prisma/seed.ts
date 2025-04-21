@@ -128,22 +128,34 @@ async function main() {
     { productId: products[5].id, stock: 24, price: 15  },
     { productId: products[6].id, stock: 3,  price: 450 },
   ];
-  await Promise.all(
-    listingSpecs.map((l) =>
+
+  const listings = await Promise.all(
+    listingSpecs.map((spec) =>
       prisma.listing.create({
-        data: { ...l, sellerId },   // listings now belong to the seller
+        data: { ...spec, sellerId },
       }),
     ),
   );
 
+  const listingByProduct: Record<number, number> = {};
+  listings.forEach((l) => (listingByProduct[l.productId] = l.id));
+
   const cart = await prisma.cart.create({
     data: {
       customerId,
-      numberOfItems: 2,
+      numberOfItems: 6,
       items: {
         create: [
-          { productId: products[5].id, quantity: 5 },
-          { productId: products[0].id, quantity: 1 },
+          {
+            productId: products[5].id,
+            quantity: 5,
+            listingId: listingByProduct[products[5].id],
+          },
+          {
+            productId: products[0].id,
+            quantity: 1,
+            listingId: listingByProduct[products[0].id],
+          },
         ],
       },
     },
@@ -165,7 +177,7 @@ async function main() {
 
   console.log(
     `Seed OK → admin(${adminUser.email}) seller(${sellerUser.email}) customer(${customerUser.email}) ` +
-    `${products.length} products, ${listingSpecs.length} listings, cart ${cart.id}, order ${order.id}`,
+    `${products.length} products, ${listings.length} listings, cart ${cart.id}, order ${order.id}`,
   );
 }
 

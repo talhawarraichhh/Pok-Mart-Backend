@@ -4,12 +4,13 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const cartIncludes = {
-    items: {
-      include: {
-        product: { include: { listings: true } },
-      },
+  items: {
+    include: {
+      product: { include: { listings: true } },
+      listing: true,              
     },
-  } as const;
+  },
+} as const;
 
 export const getCartById: RequestHandler = async (req, res) => {
   try {
@@ -63,63 +64,57 @@ export const getCartByCustomerId: RequestHandler = async (req, res) => {
     }
   };  
 
-export const addItemToCart: RequestHandler = async (req, res) => {
-  try {
-    const userId = Number(req.params.customerId);
+  export const addItemToCart: RequestHandler = async (req, res) => {
+    try {
+      const userId = Number(req.params.customerId);
+      const customer = await prisma.customer.findUnique({ where: { userId } });
+      if (!customer) {
+        res.status(404).json({ error: "Customer not found" });
+        return;
+      }
+      const customerId = customer.id;
   
-    const customer = await prisma.customer.findUnique({ where: { userId } });
-    if (!customer) {
-      res.status(404).json({ error: 'Customer not found' });
-      return;
-    }
-
-    const customerId = customer.id;
-    const { productId, quantity } = req.body as {
-      productId: number;
-      quantity: number;
-    };
-
-    // ensure cart exists or create one
-    const baseCart = await prisma.cart.upsert({
-      where: { customerId },
-      create: { customerId, numberOfItems: 0 },
-      update: {},
-    });
-
-    // add the item
-    await prisma.cartItem.create({
-      data: { cartId: baseCart.id, productId, quantity },
-    });
-
-    // recalc numberOfItems
-    const totalQty =
-      (
-        await prisma.cartItem.aggregate({
-          _sum: { quantity: true },
-          where: { cartId: baseCart.id },
-        })
-      )._sum.quantity ?? 0;
-
-    // update cart and return full object with items + product details
-    const fullCart = await prisma.cart.update({
+      const { productId, quantity, listingId } = req.body as {
+        productId: number;
+        quantity: number;
+        listingId: number;
+      };
+  
+      const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+      if (!listing || listing.productId !== productId) {
+        res.status(400).json({ error: "Invalid listing for this product" });
+        return;
+      }
+  
+      const baseCart = await prisma.cart.upsert({
+        where: { customerId },
+        create: { customerId, numberOfItems: 0 },
+        update: {},
+      });
+  
+      await prisma.cartItem.create({
+        data: { cartId: baseCart.id, productId, quantity, listingId },
+      });
+  
+      const totalQty =
+        (
+          await prisma.cartItem.aggregate({
+            _sum: { quantity: true },
+            where: { cartId: baseCart.id },
+          })
+        )._sum.quantity ?? 0;
+  
+      const fullCart = await prisma.cart.update({
         where: { id: baseCart.id },
         data: { numberOfItems: totalQty },
-        include: {
-          items: {
-            include: {
-              product: {
-                include: { listings: true }
-              }
-            }
-          }
-        },
-      });      
-
-    res.status(201).json(fullCart);
-  } catch {
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
+        include: cartIncludes,
+      });
+  
+      res.status(201).json(fullCart);
+    } catch {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  };  
 
 export const updateCartItem: RequestHandler = async (req, res) => {
   try {
