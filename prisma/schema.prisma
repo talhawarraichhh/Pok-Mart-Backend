@@ -1,6 +1,6 @@
 // prisma/schema.prisma
 // ———————————————————————————————————————————————————————————————————
-// PRISMA CLIENT GENERATOR & DATASOURCE
+// PRISMA CLIENT GENERATOR & DATASOURCE
 // ———————————————————————————————————————————————————————————————————
 generator client {
   provider = "prisma-client-js"
@@ -29,14 +29,14 @@ model User {
 model Admin {
   id     Int  @id @default(autoincrement())
   userId Int  @unique
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)   
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Seller {
   id       Int   @id @default(autoincrement())
   userId   Int   @unique
   rating   Int?
-  user     User  @relation(fields: [userId], references: [id], onDelete: Cascade)   
+  user     User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   orders   Order[]
   listings Listing[]
 }
@@ -44,7 +44,7 @@ model Seller {
 model Customer {
   id       Int      @id @default(autoincrement())
   userId   Int      @unique
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade) 
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   orders   Order[]
   cart     Cart?
 }
@@ -54,7 +54,6 @@ model Customer {
 // ———————————————————————————————————————————————————————————————————
 model Cart {
   id            Int        @id @default(autoincrement())
-  // cart_ID      Int?       // –– REMOVED (duplicate of primary key)
   numberOfItems Int?
 
   customerId Int?      @unique
@@ -64,41 +63,38 @@ model Cart {
 }
 
 model CartItem {
-  id          Int    @id @default(autoincrement())
-  item_Number String?
+  id          Int     @id @default(autoincrement())
   quantity    Int
 
   cartId   Int
-  cart     Cart   @relation(fields: [cartId], references: [id])
+  cart     Cart    @relation(fields: [cartId], references: [id])
 
   productId Int
   product   Product @relation(fields: [productId], references: [id])
 
- listingId  Int
- listing   Listing @relation("ListingCartItems", fields: [listingId], references: [id], onDelete: Cascade)
+  listingId Int
+  listing   Listing @relation("ListingCartItems", fields: [listingId], references: [id], onDelete: Cascade)
 }
 
 // ———————————————————————————————————————————————————————————————————
 // 3) ORDER & ORDER_ITEM
 // ———————————————————————————————————————————————————————————————————
 model Order {
-  id           Int      @id @default(autoincrement())
-  order_Number String?
-  cost         Decimal?
-  customerId   Int
-  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade) // ← add
-  sellerId     Int
-  seller       Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)   // ← add
-  items        OrderItem[]
+  id         Int      @id @default(autoincrement())
+  cost       Decimal?
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  sellerId   Int
+  seller     Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  items      OrderItem[]
 }
 
 model OrderItem {
   id             Int     @id @default(autoincrement())
-  item_Number    String?
   quantity       Int
   purchase_Price Decimal?
   orderId        Int
-  order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)   // ← add
+  order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId      Int
   product        Product @relation(fields: [productId], references: [id])
 }
@@ -108,7 +104,6 @@ model OrderItem {
 // ———————————————————————————————————————————————————————————————————
 model Product {
   id          Int     @id @default(autoincrement())
-  // product_ID String? // –– REMOVED (duplicate of primary key, add back if you need a SKU)
   name        String
   description String?
   productType String?
@@ -125,8 +120,8 @@ model Product {
 }
 
 model Set {
-  id           Int       @id @default(autoincrement())
-  name         String
+  id          Int       @id @default(autoincrement())
+  name        String
   release_Date DateTime?
 
   products Product[]
@@ -137,7 +132,7 @@ model Listing {
   stock     Int
   price     Decimal
   sellerId  Int
-  seller    Seller  @relation(fields: [sellerId], references: [id], onDelete: Cascade) 
+  seller    Seller  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   productId Int
   product   Product @relation(fields: [productId], references: [id])
   cartItems CartItem[] @relation("ListingCartItems")
